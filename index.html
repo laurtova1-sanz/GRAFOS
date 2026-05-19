@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Rutas Facatativá</title>
+  <style>
+    body {
+      font-family: Arial;
+      background: #111;
+      color: white;
+      padding: 20px;
+    }
+
+    h2 {
+      margin-bottom: 8px;
+    }
+
+    label {
+      font-size: 14px;
+    }
+
+    select {
+      padding: 5px;
+      font-size: 13px;
+      margin: 4px;
+    }
+
+    button {
+      padding: 6px 14px;
+      font-size: 13px;
+      margin: 4px;
+      cursor: pointer;
+      background: #2a7a2a;
+      color: white;
+      border: none;
+    }
+
+    .mapa-wrapper {
+      position: relative;
+      width: 750px;
+      height: 500px;
+      margin-top: 10px;
+      border: 1px solid #444;
+    }
+
+    .mapa-wrapper img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 750px;
+      height: 500px;
+    }
+
+    #canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 750px;
+      height: 500px;
+    }
+
+    #resultado {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #aaffaa;
+      white-space: pre;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Mapa de Rutas - Facatativá</h2>
+
+  <label>Inicio:</label>
+  <select id="inicio"></select>
+  <label>Destino:</label>
+  <select id="fin"></select>
+  <button onclick="ejecutarDijkstra()">Mejor ruta</button>
+  <button onclick="dibujar([],[])" style="background:#444">Borrar</button>
+
+  <div class="mapa-wrapper">
+    <img src="mapa.png" alt="Mapa Facatativá">
+    <canvas id="canvas" width="750" height="500"></canvas>
+  </div>
+
+  <div id="resultado">-Para saber que ruta es corta, selecciona los puntos de inicio y destino.</div>
+
+  <script src="grafo.js"></script>
+  <script>
+
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+
+    // posiciones de cada nodo en el mapa
+    const posiciones = {
+      "P1": { x: 400, y: 62 },
+      "P2": { x: 228, y: 242 },
+      "P3": { x: 448, y: 235 },
+      "P4": { x: 348, y: 368 },
+      "P5": { x: 480, y: 408 }
+    };
+
+    // colores de cada nodo
+    const coloresNodo = {
+      "P1": "#36BBA7",
+      "P2": "#51A2FF",
+      "P3": "#FF8904",
+      "P4": "#ED6AFF",
+      "P5": "#A3B3FF"
+    };
+
+    // llenar los selectores
+    let ids = Object.keys(mapaUrbano.vertices);
+    let opciones = ids.map(id => "<option value='" + id + "'>" + id + "</option>").join("");
+    document.getElementById("inicio").innerHTML = opciones;
+    document.getElementById("fin").innerHTML = opciones;
+    document.getElementById("fin").selectedIndex = ids.length - 1;
+
+    // funcion para dibujar el grafo
+    function dibujar(nodosResaltados, arcosResaltados) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // dibujar aristas
+      for (let id in mapaUrbano.vertices) {
+        let nodo = mapaUrbano.vertices[id];
+        let pos = posiciones[id];
+        let arco = nodo.primerArco;
+
+        while (arco !== null) {
+          let posD = posiciones[arco.idDestino];
+          let clave = id + "-" + arco.idDestino;
+          let esResaltado = arcosResaltados.includes(clave);
+
+          ctx.beginPath();
+          ctx.moveTo(pos.x, pos.y);
+          ctx.lineTo(posD.x, posD.y);
+          ctx.strokeStyle = esResaltado ? "red" : "blue";
+          ctx.lineWidth = esResaltado ? 3 : 1;
+          ctx.stroke();
+
+          // mostrar la distancia
+          let mx = (pos.x + posD.x) / 2;
+          let my = (pos.y + posD.y) / 2;
+          let label = arco.peso >= 1000
+            ? (arco.peso / 1000).toFixed(1) + " km"
+            : arco.peso + " m";
+
+          ctx.fillStyle = "white";
+          ctx.font = "11px Arial";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText(label, mx, my - 6);
+
+          arco = arco.siguienteArco;
+        }
+      }
+
+      // dibujar nodos
+      for (let id in mapaUrbano.vertices) {
+        let nodo = mapaUrbano.vertices[id];
+        let pos = posiciones[id];
+        let esResaltado = nodosResaltados.includes(id);
+        let color = coloresNodo[id];
+
+        ctx.beginPath();
+        ctx.arc(pos.x, pos.y, 20, 0, Math.PI * 2);
+        ctx.fillStyle = esResaltado ? "red" : color;
+        ctx.fill();
+        ctx.strokeStyle = "black";
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        ctx.fillStyle = "white";
+        ctx.font = "bold 12px Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(nodo.id, pos.x, pos.y);
+
+        ctx.font = "10px Arial";
+        ctx.fillText(nodo.nombre, pos.x, pos.y + 32);
+      }
+    }
+
+    // funcion dijkstra
+    function ejecutarDijkstra() {
+      let idInicio = document.getElementById("inicio").value;
+      let idFin = document.getElementById("fin").value;
+
+      if (idInicio === idFin) {
+        document.getElementById("resultado").textContent = "El inicio y el destino son iguales.";
+        return;
+      }
+
+      let resultado = mapaUrbano.Dijkstra(idInicio, idFin);
+
+      if (resultado.distancia === Infinity) {
+        document.getElementById("resultado").textContent = "No hay ruta entre esos lugares.";
+        return;
+      }
+
+      let arcos = [];
+      for (let i = 0; i < resultado.camino.length - 1; i++) {
+        arcos.push(resultado.camino[i] + "-" + resultado.camino[i + 1]);
+        arcos.push(resultado.camino[i + 1] + "-" + resultado.camino[i]);
+      }
+
+      dibujar(resultado.camino, arcos);
+
+      let distancia = resultado.distancia >= 1000
+        ? (resultado.distancia / 1000).toFixed(2) + " km"
+        : resultado.distancia + " m";
+
+      document.getElementById("resultado").textContent =
+        "Ruta mas corta: " + resultado.camino.join(" >>> ") + "\n" +
+        "Distancia total: " + distancia;
+    }
+
+    // dibujar al cargar la pagina
+    dibujar([], []);
+
+  </script>
+</body>
+</html>
