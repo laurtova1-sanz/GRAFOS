@@ -142,7 +142,7 @@
           let mx = (pos.x + posD.x) / 2;
           let my = (pos.y + posD.y) / 2;
           let label = arco.peso >= 1000
-            ? (arco.peso / 1000).toFixed(1) + " km"
+            ? (arco.peso / 1000) + " km"
             : arco.peso + " m";
 
           ctx.fillStyle = "white";
@@ -207,7 +207,7 @@
       dibujar(resultado.camino, arcos);
 
       let distancia = resultado.distancia >= 1000
-        ? (resultado.distancia / 1000).toFixed(2) + " km"
+        ? (resultado.distancia / 1000) + " km"
         : resultado.distancia + " m";
 
       document.getElementById("resultado").textContent =
@@ -218,6 +218,9 @@
     // dibujar al cargar la pagina
     dibujar([], []);
 
+  </script>
+</body>
+</html>
   </script>
 </body>
 </html>
