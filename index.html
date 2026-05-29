@@ -170,7 +170,7 @@
 
       <input type="number"
              id="pesoConexion"
-             placeholder="Distancia">
+             placeholder="Distancia en metros">
 
       <button onclick="agregarConexionVisual()">
         Conectar
@@ -275,11 +275,17 @@
         let nodo = mapaUrbano.vertices[id];
         let pos = posiciones[id];
 
+        // CORRECCIÓN: si no tiene posición registrada, se omite
+        if (!pos) continue;
+
         let arco = nodo.primerArco;
 
         while (arco !== null) {
 
           let posD = posiciones[arco.idDestino];
+
+          // CORRECCIÓN: si el destino no tiene posición, se omite ese arco
+          if (!posD) { arco = arco.siguienteArco; continue; }
 
           let clave = id + "-" + arco.idDestino;
 
@@ -300,20 +306,25 @@
 
           ctx.stroke();
 
-          // DISTANCIA
-
+          // DISTANCIA con fondo para que se lea
           let mx = (pos.x + posD.x) / 2;
           let my = (pos.y + posD.y) / 2;
 
           let label =
             arco.peso >= 1000
-            ? (arco.peso/1000)+" km"
+            ? (arco.peso/1000).toFixed(1)+" km"
             : arco.peso+" m";
 
-          ctx.fillStyle = "white";
           ctx.font = "11px Arial";
+          let tw = ctx.measureText(label).width;
 
-          ctx.fillText(label,mx,my-6);
+          // fondo blanco semitransparente detrás del texto
+          ctx.fillStyle = "rgba(0,0,0,0.6)";
+          ctx.fillRect(mx - tw/2 - 2, my - 13, tw + 4, 15);
+
+          ctx.fillStyle = "white";
+          ctx.textAlign = "center";
+          ctx.fillText(label, mx, my - 2);
 
           arco = arco.siguienteArco;
         }
@@ -328,10 +339,13 @@
 
         let pos = posiciones[id];
 
+        // CORRECCIÓN: si no tiene posición registrada, se omite
+        if (!pos) continue;
+
         let esResaltado =
           nodosResaltados.includes(id);
 
-        let color = coloresNodo[id];
+        let color = coloresNodo[id] || "#888888";
 
         ctx.beginPath();
 
@@ -370,10 +384,10 @@
     function agregarNodoVisual() {
 
       let id =
-        document.getElementById("nuevoId").value;
+        document.getElementById("nuevoId").value.trim();
 
       let nombre =
-        document.getElementById("nuevoNombre").value;
+        document.getElementById("nuevoNombre").value.trim();
 
       if (!id || !nombre) {
         alert("Completa los datos");
@@ -389,7 +403,7 @@
 
       coloresNodo[id] =
         "#" + Math.floor(Math.random()*16777215)
-        .toString(16);
+        .toString(16).padStart(6,"0");
 
       actualizarSelects();
 
@@ -402,7 +416,12 @@
     function eliminarNodoVisual() {
 
       let id =
-        document.getElementById("nuevoId").value;
+        document.getElementById("nuevoId").value.trim();
+
+      if (!mapaUrbano.vertices[id]) {
+        alert("Nodo no encontrado");
+        return;
+      }
 
       delete mapaUrbano.vertices[id];
 
@@ -432,7 +451,12 @@
         );
 
       if (!peso || peso <= 0) {
-        alert("Peso invalido");
+        alert("Distancia invalida");
+        return;
+      }
+
+      if (origen === destino) {
+        alert("Origen y destino deben ser diferentes");
         return;
       }
 
@@ -442,6 +466,7 @@
         peso
       );
 
+      // CORRECCIÓN: redibujar para mostrar la nueva línea
       dibujar([],[]);
     }
 
@@ -476,12 +501,16 @@
 
       dibujar(resultado.camino, arcos);
 
+      let dist = resultado.distancia >= 1000
+        ? (resultado.distancia/1000).toFixed(2)+" km"
+        : resultado.distancia+" m";
+
       document.getElementById("resultado")
       .textContent =
         "Ruta mas corta:\n"
         + resultado.camino.join(" >>> ")
         + "\nDistancia: "
-        + resultado.distancia + " m";
+        + dist;
     }
 
 
