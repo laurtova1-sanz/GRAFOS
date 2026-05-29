@@ -1,4 +1,3 @@
-
 // CLASE ARISTA - conexion entre dos nodos
 class Arista {
     constructor(idDestino, peso) {
@@ -45,9 +44,9 @@ class Grafo {
             let arco = nodo.primerArco;
             while (arco !== null) {
                 let destino = this.vertices[arco.idDestino];
-                let label   = arco.peso >= 1000
-                    ? (arco.peso / 1000).toFixed(1) + " km"
-                    : arco.peso + " m";
+                let label = arco.peso >= 1000
+                 ? (arco.peso / 1000) + " km"
+                 : arco.peso + " m";
                 texto += "  → " + destino.nombre + " | " + label + "\n";
                 arco = arco.siguienteArco;
             }
@@ -58,21 +57,20 @@ class Grafo {
     // DIJKSTRA - Camino mas corto
     Dijkstra(idInicio, idFin) {
         let distancias = [];
-        let anteriores = [];
+        let anteriores = [];       
         let visitados  = [];
-        let ids        = Object.keys(this.vertices);
+        for (let id in this.vertices) {
+         distancias[id] = Infinity;
+         anteriores[id] = null;
+}
 
-        for (let i = 0; i < ids.length; i++) {
-            distancias[ids[i]] = Infinity;
-            anteriores[ids[i]] = null;
-        }
         distancias[idInicio] = 0;
 
         for (let i = 0; i < ids.length; i++) {
             let idActual = null;
             for (let j = 0; j < ids.length; j++) {
                 if (!visitados[ids[j]]) {
-                    if (idActual === null || distancias[ids[j]] < distancias[idActual]) {
+                    if (idActual === null || distancias[ids[j]] < distancias[idActual]) { //el elemento actual si aún no se ha definido ninguno, o si el nuevo elemento que estamos evaluando tiene una distancia menor al que teníamos guardad
                         idActual = ids[j];
                     }
                 }
@@ -94,10 +92,10 @@ class Grafo {
         let camino = [];
         let actual = idFin;
         while (actual !== null) {
-            camino.unshift(actual);
+            camino.push(actual);
             actual = anteriores[actual];
         }
-
+        camino.reverse();
         return { camino: camino, distancia: distancias[idFin] };
     }
 }
@@ -129,6 +127,9 @@ mapaUrbano.agregarArco("P4", "P3", 600);    // Hospital - Estación Policía
 
 mapaUrbano.agregarArco("P4", "P5", 500);    // Hospital - Villa del Prado
 mapaUrbano.agregarArco("P5", "P4", 500);    // Villa del Prado - Hospital
+
+mapaUrbano.agregarArco("P3", "P5", 300);    // Estación Policía - Villa del Prado
+mapaUrbano.agregarArco("P5", "P3", 300);    // Villa del Prado - Estación Policía
 
 mapaUrbano.agregarArco("P3", "P5", 300);    // Estación Policía - Villa del Prado
 mapaUrbano.agregarArco("P5", "P3", 300);    // Villa del Prado - Estación Policía
