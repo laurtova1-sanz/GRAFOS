@@ -1,4 +1,26 @@
-// CLASE ARISTA - conexion entre dos nodos
+listarNodos() {
+    let texto = "=== LISTA DE NODOS ===\n";
+    for (let id in this.vertices) {
+        let nodo = this.vertices[id];
+        texto += "\nID: " + nodo.id + " | Nombre: " + nodo.nombre + "\n";
+
+        // ARCOS del nodo
+        let arco = nodo.primerArco;
+
+        if (arco === null) {
+            texto += "  Sin conexiones\n";
+        }
+
+        while (arco !== null) {
+            let label = arco.peso >= 1000
+                ? (arco.peso / 1000) + " km"
+                : arco.peso + " m";
+            texto += "  → " + arco.idDestino + " | " + label + "\n";
+            arco = arco.siguienteArco;
+        }
+    }
+    return texto;
+}// CLASE ARISTA - conexion entre dos nodos
 class Arista {
     constructor(idDestino, peso) {
         this.idDestino     = idDestino;
